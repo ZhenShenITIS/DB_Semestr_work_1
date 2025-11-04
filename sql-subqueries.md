@@ -102,11 +102,11 @@ WHERE (SELECT SUM(t.value) FROM autoservice_schema.task t WHERE t.order_id = o.i
 
 
 
-### 3.3. Филиалы с избытком работников относительно боксов
+### 3.3. Филиалы с равным или большим количеством работников относительно боксов
 ```sql
 SELECT bo.address, bo.phone_number
 FROM autoservice_schema.branch_office bo
-WHERE (SELECT COUNT(*) FROM autoservice_schema.worker w WHERE w.id_branch_office = bo.id) >
+WHERE (SELECT COUNT(*) FROM autoservice_schema.worker w WHERE w.id_branch_office = bo.id) >=
       (SELECT COUNT(*) FROM autoservice_schema.box b WHERE b.id_branch_office = bo.id);
 ```
 
@@ -205,49 +205,44 @@ WHERE cust.id IN (
 
 ## 6. ANY
 
-### 6.1. Работники с выплатами больше любой выплаты приёмщиков
+### 6.1. Работники с выплатами больше любой выплаты диагностов
 ```sql
-SELECT DISTINCT w.full_name, w.role
+SELECT DISTINCT w.full_name, w.role, p.value
 FROM autoservice_schema.worker w
-         JOIN autoservice_schema.payout p ON w.id = p.worker_id
+JOIN autoservice_schema.payout p ON w.id = p.worker_id
 WHERE p.value > ANY (
     SELECT p2.value
     FROM autoservice_schema.payout p2
-             JOIN autoservice_schema.worker w2 ON p2.worker_id = w2.id
-    WHERE w2.role = 'Приёмщик'
+    JOIN autoservice_schema.worker w2 ON p2.worker_id = w2.id
+    WHERE w2.role = 'Диагност'
 );
 ```
 
 **РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: ФИО работника (full_name) и роль (role) для работников, получавших выплаты больше хотя бы одной выплаты менеджера
 
-### 6.2. Заказы дороже любого заказа клиента Иванова
+### 6.2. Задачи дороже любой задачи механиков
 ```sql
-SELECT o.id, o.description, SUM(t.value) as total_cost
-FROM autoservice_schema.order o
-JOIN autoservice_schema.task t ON o.id = t.order_id
-GROUP BY o.id, o.description
-HAVING SUM(t.value) > ANY (
-    SELECT SUM(t2.value)
-    FROM autoservice_schema.order o2
-    JOIN autoservice_schema.task t2 ON o2.id = t2.order_id
-    JOIN autoservice_schema.customer c ON o2.customer_id = c.id
-    WHERE c.full_name = 'Иванов Иван'
-    GROUP BY o2.id
+SELECT t.id, t.description, t.value
+FROM autoservice_schema.task t
+WHERE t.value > ANY (
+    SELECT t2.value
+    FROM autoservice_schema.task t2
+             JOIN autoservice_schema.worker w ON t2.worker_id = w.id
+    WHERE w.role = 'Механик'
 );
 ```
 
 **РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с тремя столбцами: ID заказа (id), описание (description) и общая стоимость (total_cost) для заказов дороже хотя бы одного заказа клиента Иванова И.И.
 
-### 6.3. Автозапчасти из закупок дороже любой закупки у московского поставщика
+### 6.3. Закупки дороже любой закупки у московских поставщиков
 ```sql
-SELECT ap.name
-FROM autoservice_schema.autopart ap
-         JOIN autoservice_schema.purchase pur ON ap.purchase_id = pur.id
+SELECT pur.id, pur.date, pur.value
+FROM autoservice_schema.purchase pur
 WHERE pur.value > ANY (
     SELECT pur2.value
     FROM autoservice_schema.purchase pur2
              JOIN autoservice_schema.provider prov ON pur2.provider_id = prov.id
-    WHERE prov.address LIKE 'Москва%'
+    WHERE prov.address LIKE '%Москва%'
 );
 ```
 
@@ -302,13 +297,13 @@ WHERE EXISTS (
 
 ## 8. Сравнение по нескольким столбцам
 
-### 8.1. Работники с одинаковыми контактными данными
+### 8.1. Работники с одинаковой ролью из одного филиала
 ```sql
-SELECT w1.full_name, w1.role, w1.phone_number, bo.address
+SELECT w1.full_name, w1.role, bo.address
 FROM autoservice_schema.worker w1
          JOIN autoservice_schema.branch_office bo ON w1.id_branch_office = bo.id
-WHERE (w1.role, LEFT(w1.phone_number, 11)) IN (
-    SELECT w2.role, LEFT(w2.phone_number, 11)
+WHERE (w1.role, w1.id_branch_office) IN (
+    SELECT w2.role, w2.id_branch_office
     FROM autoservice_schema.worker w2
     WHERE w2.id != w1.id
 );
@@ -320,30 +315,29 @@ WHERE (w1.role, LEFT(w1.phone_number, 11)) IN (
 ```sql
 SELECT c1.vin, c1.model, c1.status, c1.plate_number
 FROM autoservice_schema.car c1
-WHERE (c1.model, c1.status) IN (
-    SELECT c2.model, c2.status
+WHERE EXISTS (
+    SELECT 1
     FROM autoservice_schema.car c2
     WHERE c2.vin != c1.vin
-    GROUP BY c2.model, c2.status
-    HAVING COUNT(*) > 1
+      AND c2.model = c1.model
+      AND c2.status = c1.status
 );
 ```
 
 **РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с четырьмя столбцами: VIN номер (vin), модель (model), статус (status) и государственный номер (plate_number) для автомобилей с дублирующейся комбинацией модели и статуса
 
-### 8.3. Поставщики из одного города с одинаковым регионом связи
+### 8.3. Поставщики с одинаковыми городами
 ```sql
 SELECT p1.id, p1.address, p1.phone_number
 FROM autoservice_schema.provider p1
-WHERE (LEFT(p1.address, POSITION(',' IN p1.address) - 1), LEFT(p1.phone_number, 5)) IN (
-    SELECT LEFT(p2.address, POSITION(',' IN p2.address) - 1), LEFT(p2.phone_number, 5)
+WHERE EXISTS (
+    SELECT 1
     FROM autoservice_schema.provider p2
     WHERE p2.id != p1.id
+      AND SPLIT_PART(p1.address, ',', 1) = SPLIT_PART(p2.address, ',', 1)
       AND p2.address IS NOT NULL
-      AND p2.phone_number IS NOT NULL
-      AND POSITION(',' IN p2.address) > 0
-)
-  AND POSITION(',' IN p1.address) > 0;
+      AND p1.address IS NOT NULL
+);
 ```
 
 **РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с тремя столбцами: ID поставщика (id), адрес (address) и номер телефона (phone_number) для поставщиков с идентичными контактными данными
