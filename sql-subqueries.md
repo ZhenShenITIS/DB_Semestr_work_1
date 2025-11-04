@@ -109,7 +109,7 @@ FROM autoservice_schema.branch_office bo
 WHERE (SELECT COUNT(*) FROM autoservice_schema.worker w WHERE w.id_branch_office = bo.id) >=
       (SELECT COUNT(*) FROM autoservice_schema.box b WHERE b.id_branch_office = bo.id);
 ```
-
+![img_30.png](img_30.png)
 
 
 ## 4. ALL
@@ -219,8 +219,9 @@ WHERE p.value > ANY (
     WHERE w2.role = 'Диагност'
 );
 ```
+![img_29.png](img_29.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: ФИО работника (full_name) и роль (role) для работников, получавших выплаты больше хотя бы одной выплаты менеджера
+
 
 ### 6.2. Задачи дороже любой задачи механиков
 ```sql
@@ -233,8 +234,8 @@ WHERE t.value > ANY (
     WHERE w.role = 'Механик'
 );
 ```
+![img_28.png](img_28.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с тремя столбцами: ID заказа (id), описание (description) и общая стоимость (total_cost) для заказов дороже хотя бы одного заказа клиента Иванова И.И.
 
 ### 6.3. Закупки дороже минимальной закупки
 ```sql
@@ -246,8 +247,8 @@ WHERE pur.value > ANY (
     WHERE pur2.provider_id = 1
 );
 ```
+![img_25.png](img_25.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с одним столбцом: название автозапчасти (name) из закупок дороже хотя бы одной закупки у поставщика с ID=1
 
 ## 7. EXISTS
 
@@ -298,22 +299,7 @@ WHERE EXISTS (
 
 ## 8. Сравнение по нескольким столбцам
 
-### 8.1. Работники из одного филиала
-```sql
-SELECT w1.full_name, w1.role, w1.id_branch_office
-FROM autoservice_schema.worker w1
-WHERE w1.id_branch_office IN (
-    SELECT w2.id_branch_office
-    FROM autoservice_schema.worker w2
-    WHERE w2.id != w1.id
-    GROUP BY w2.id_branch_office
-    HAVING COUNT(*) > 1
-);
-```
-
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с четырьмя столбцами: ФИО работника (full_name), роль (role), номер телефона (phone_number) и адрес филиала (address) для работников с одинаковой комбинацией роли и телефона
-
-### 8.2. Автомобили с одинаковой моделью
+### 8.1. Автомобили с одинаковой моделью
 ```sql
 SELECT c1.vin, c1.model, c1.status, c1.plate_number
 FROM autoservice_schema.car c1
@@ -323,10 +309,11 @@ WHERE c1.model IN (
     WHERE c2.vin != c1.vin
 );
 ```
+![img_26.png](img_26.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с четырьмя столбцами: VIN номер (vin), модель (model), статус (status) и государственный номер (plate_number) для автомобилей с дублирующейся комбинацией модели и статуса
 
-### 8.3. Поставщики с разными ID но одинаковыми данными
+
+### 8.2. Поставщики с разными ID но одинаковыми данными
 ```sql
 SELECT p1.id, p1.address, p1.phone_number
 FROM autoservice_schema.provider p1
@@ -338,5 +325,5 @@ WHERE (p1.address, p1.phone_number) IN (
     AND p2.phone_number IS NOT NULL
 );
 ```
+![img_27.png](img_27.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с тремя столбцами: ID поставщика (id), адрес (address) и номер телефона (phone_number) для поставщиков с идентичными контактными данными
