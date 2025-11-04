@@ -236,15 +236,14 @@ WHERE t.value > ANY (
 
 **РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с тремя столбцами: ID заказа (id), описание (description) и общая стоимость (total_cost) для заказов дороже хотя бы одного заказа клиента Иванова И.И.
 
-### 6.3. Закупки дороже любой закупки у московских поставщиков
+### 6.3. Закупки дороже минимальной закупки
 ```sql
 SELECT pur.id, pur.date, pur.value
 FROM autoservice_schema.purchase pur
 WHERE pur.value > ANY (
     SELECT pur2.value
     FROM autoservice_schema.purchase pur2
-             JOIN autoservice_schema.provider prov ON pur2.provider_id = prov.id
-    WHERE prov.address LIKE '%Москва%'
+    WHERE pur2.provider_id = 1
 );
 ```
 
@@ -299,46 +298,44 @@ WHERE EXISTS (
 
 ## 8. Сравнение по нескольким столбцам
 
-### 8.1. Работники с одинаковой ролью из одного филиала
+### 8.1. Работники из одного филиала
 ```sql
-SELECT w1.full_name, w1.role, bo.address
+SELECT w1.full_name, w1.role, w1.id_branch_office
 FROM autoservice_schema.worker w1
-         JOIN autoservice_schema.branch_office bo ON w1.id_branch_office = bo.id
-WHERE (w1.role, w1.id_branch_office) IN (
-    SELECT w2.role, w2.id_branch_office
+WHERE w1.id_branch_office IN (
+    SELECT w2.id_branch_office
     FROM autoservice_schema.worker w2
     WHERE w2.id != w1.id
+    GROUP BY w2.id_branch_office
+    HAVING COUNT(*) > 1
 );
 ```
 
 **РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с четырьмя столбцами: ФИО работника (full_name), роль (role), номер телефона (phone_number) и адрес филиала (address) для работников с одинаковой комбинацией роли и телефона
 
-### 8.2. Автомобили с одинаковой моделью и статусом
+### 8.2. Автомобили с одинаковой моделью
 ```sql
 SELECT c1.vin, c1.model, c1.status, c1.plate_number
 FROM autoservice_schema.car c1
-WHERE EXISTS (
-    SELECT 1
+WHERE c1.model IN (
+    SELECT c2.model
     FROM autoservice_schema.car c2
     WHERE c2.vin != c1.vin
-      AND c2.model = c1.model
-      AND c2.status = c1.status
 );
 ```
 
 **РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с четырьмя столбцами: VIN номер (vin), модель (model), статус (status) и государственный номер (plate_number) для автомобилей с дублирующейся комбинацией модели и статуса
 
-### 8.3. Поставщики с одинаковыми городами
+### 8.3. Поставщики с разными ID но одинаковыми данными
 ```sql
 SELECT p1.id, p1.address, p1.phone_number
 FROM autoservice_schema.provider p1
-WHERE EXISTS (
-    SELECT 1
+WHERE (p1.address, p1.phone_number) IN (
+    SELECT p2.address, p2.phone_number
     FROM autoservice_schema.provider p2
     WHERE p2.id != p1.id
-      AND SPLIT_PART(p1.address, ',', 1) = SPLIT_PART(p2.address, ',', 1)
-      AND p2.address IS NOT NULL
-      AND p1.address IS NOT NULL
+    AND p2.address IS NOT NULL
+    AND p2.phone_number IS NOT NULL
 );
 ```
 
