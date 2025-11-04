@@ -87,7 +87,7 @@ SELECT w.full_name, w.role
 FROM autoservice_schema.worker w
 WHERE (SELECT COUNT(*) FROM autoservice_schema.task t WHERE t.worker_id = w.id) > 1;
 ```
-
+![img_19.png](img_19.png)
 
 
 ### 3.2. Заказы с общей стоимостью выше среднего чека
@@ -172,6 +172,7 @@ WHERE w.id_branch_office IN (
     WHERE b.box_type = 'Диагностическая линия'
 );
 ```
+![img_20.png](img_20.png)
 
 
 
@@ -185,6 +186,7 @@ WHERE c.vin IN (
     WHERE t.value > 1500
 );
 ```
+![img_21.png](img_21.png)
 
 
 
