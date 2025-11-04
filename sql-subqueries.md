@@ -10,8 +10,8 @@ SELECT w.full_name,
         WHERE t.worker_id = w.id) as task_count
 FROM autoservice_schema.worker w;
 ```
+![img_4.png](img_4.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: ФИО работника (full_name) и количество выполненных им задач (task_count)
 
 ### 1.2. Заказы с расчетом общей стоимости задач
 ```sql
@@ -21,8 +21,8 @@ SELECT o.id, o.description,
         WHERE t.order_id = o.id) as total_cost
 FROM autoservice_schema.order o;
 ```
+![img_5.png](img_5.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с тремя столбцами: ID заказа (id), описание заказа (description) и общая стоимость всех задач по заказу (total_cost)
 
 ### 1.3. Филиалы с количеством боксов в каждом
 ```sql
@@ -32,8 +32,8 @@ SELECT bo.address,
         WHERE b.id_branch_office = bo.id) as box_count
 FROM autoservice_schema.branch_office bo;
 ```
+![img_6.png](img_6.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: адрес филиала (address) и количество боксов в филиале (box_count)
 
 ## 2. Подзапрос в FROM
 
@@ -46,8 +46,8 @@ FROM (SELECT w.role, w.id, AVG(t.value) as avg_task_value
       GROUP BY w.role, w.id) as worker_stats
 GROUP BY worker_stats.role;
 ```
+![img_7.png](img_7.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: роль/должность работника (role) и средняя стоимость задач для данной роли (avg_by_role)
 
 ### 2.2. Клиенты с максимальным количеством заказов
 ```sql
@@ -65,8 +65,8 @@ WHERE customer_orders.order_count = (
     ) max_orders
 );
 ```
+![img_8.png](img_8.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: ФИО клиента (full_name) и количество его заказов (order_count), только для клиентов с наибольшим числом заказов
 
 ### 2.3. Статистика по филиалам: работники и боксы
 ```sql
@@ -76,8 +76,8 @@ FROM (SELECT bo.id, bo.address,
              (SELECT COUNT(*) FROM autoservice_schema.box b WHERE b.id_branch_office = bo.id) as box_count
       FROM autoservice_schema.branch_office bo) as branch_stats;
 ```
+![img_9.png](img_9.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с тремя столбцами: адрес филиала (address), количество работников (worker_count) и количество боксов (box_count) в каждом филиале
 
 ## 3. Подзапрос в WHERE/HAVING
 
@@ -90,7 +90,7 @@ WHERE (SELECT COUNT(*) FROM autoservice_schema.task t WHERE t.worker_id = w.id) 
        (SELECT COUNT(*) as task_count FROM autoservice_schema.task GROUP BY worker_id) counts);
 ```
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: ФИО работника (full_name) и его роль (role) для работников, выполнивших больше задач чем в среднем
+
 
 ### 3.2. Заказы с общей стоимостью выше среднего чека
 ```sql
@@ -100,8 +100,9 @@ WHERE (SELECT SUM(t.value) FROM autoservice_schema.task t WHERE t.order_id = o.i
       (SELECT AVG(order_total) FROM 
        (SELECT SUM(t.value) as order_total FROM autoservice_schema.task t GROUP BY t.order_id) totals);
 ```
+![img_10.png](img_10.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: ID заказа (id) и описание заказа (description) для заказов стоимостью выше среднего
+
 
 ### 3.3. Филиалы с избытком работников относительно боксов
 ```sql
@@ -111,7 +112,7 @@ WHERE (SELECT COUNT(*) FROM autoservice_schema.worker w WHERE w.id_branch_office
       (SELECT COUNT(*) FROM autoservice_schema.box b WHERE b.id_branch_office = bo.id);
 ```
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с одним столбцом: адрес филиала (address), где работников больше чем боксов
+
 
 ## 4. ALL
 
@@ -127,8 +128,8 @@ HAVING SUM(t.value) >= ALL (
     GROUP BY t2.worker_id
 );
 ```
+![img_11.png](img_11.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: ФИО работника (full_name) и общая стоимость его задач (total_value) для работника с наибольшей суммой
 
 ### 4.2. Заказы с максимальной общей стоимостью
 ```sql
@@ -142,8 +143,9 @@ HAVING SUM(t.value) >= ALL (
     GROUP BY t2.order_id
 );
 ```
+![img_12.png](img_12.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с тремя столбцами: ID заказа (id), описание (description) и общая стоимость (total_cost) для самых дорогих заказов
+
 
 ### 4.3. Поставщики с максимальной суммой закупок
 ```sql
@@ -157,8 +159,8 @@ HAVING SUM(pur.value) >= ALL (
     GROUP BY pur2.provider_id
 );
 ```
+![img_13.png](img_13.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с тремя столбцами: ID поставщика (id), адрес (address) и общая сумма закупок (total_purchases) для поставщика с наибольшим оборотом
 
 ## 5. IN
 
@@ -173,7 +175,7 @@ WHERE w.id_branch_office IN (
 );
 ```
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: ФИО работника (full_name) и роль (role) для работников из филиалов, имеющих диагностические боксы
+
 
 ### 5.2. Автомобили с дорогостоящими задачами
 ```sql
@@ -186,7 +188,7 @@ WHERE c.vin IN (
 );
 ```
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с тремя столбцами: VIN номер (vin), модель автомобиля (model) и государственный номер (plate_number) для машин с задачами стоимостью свыше 5000
+
 
 ### 5.3. Клиенты, использовавшие автозапчасти в заказах
 ```sql
@@ -199,8 +201,9 @@ WHERE cust.id IN (
     WHERE t.id IN (SELECT ap.task_id FROM autoservice_schema.autopart ap WHERE ap.task_id IS NOT NULL)
 );
 ```
+![img_14.png](img_14.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: ФИО клиента (full_name) и номер телефона (phone_number) для клиентов, чьи заказы включали установку автозапчастей
+
 
 ## 6. ANY
 
@@ -263,8 +266,9 @@ WHERE EXISTS (
     WHERE o.customer_id = c.id
 );
 ```
+![img_15.png](img_15.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: ФИО клиента (full_name) и номер телефона (phone_number) для клиентов, которые имеют хотя бы один заказ
+
 
 ### 7.2. Работники, использовавшие автозапчасти в работе
 ```sql
@@ -277,8 +281,8 @@ WHERE EXISTS (
     WHERE t.worker_id = w.id
 );
 ```
+![img_16.png](img_16.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: ФИО работника (full_name) и роль (role) для работников, выполнявших задачи с использованием автозапчастей
 
 ### 7.3. Филиалы с закрытыми заказами
 ```sql
@@ -293,8 +297,9 @@ WHERE EXISTS (
     WHERE w.id_branch_office = bo.id
 );
 ```
+![img_17.png](img_17.png)
 
-**РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с двумя столбцами: адрес филиала (address) и номер телефона (phone_number) для филиалов, где есть закрытые заказы
+
 
 ## 8. Сравнение по нескольким столбцам
 
@@ -341,13 +346,3 @@ WHERE (p1.address, p1.phone_number) IN (
 ```
 
 **РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ЗАПРОСА** — таблица с тремя столбцами: ID поставщика (id), адрес (address) и номер телефона (phone_number) для поставщиков с идентичными контактными данными
-
----
-
-## Где можно использовать подзапрос:
-
-• В WHERE/HAVING — фильтрация данных
-• В FROM — как временная таблица (derived table)  
-• В SELECT — для вычисления значения
-• В EXISTS, IN, ANY, ALL
-• В INSERT, UPDATE, DELETE
