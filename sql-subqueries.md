@@ -10,7 +10,7 @@ SELECT w.full_name,
         WHERE t.worker_id = w.id) as task_count
 FROM autoservice_schema.worker w;
 ```
-![img_4.png](img_4.png)
+![img_4.png](images-01-11-25/img_4.png)
 
 
 ### 1.2. Заказы с расчетом общей стоимости задач
@@ -21,7 +21,7 @@ SELECT o.id, o.description,
         WHERE t.order_id = o.id) as total_cost
 FROM autoservice_schema.order o;
 ```
-![img_5.png](img_5.png)
+![img_5.png](images-01-11-25/img_5.png)
 
 
 ### 1.3. Филиалы с количеством боксов в каждом
@@ -32,7 +32,7 @@ SELECT bo.address,
         WHERE b.id_branch_office = bo.id) as box_count
 FROM autoservice_schema.branch_office bo;
 ```
-![img_6.png](img_6.png)
+![img_6.png](images-01-11-25/img_6.png)
 
 
 ## 2. Подзапрос в FROM
@@ -46,7 +46,7 @@ FROM (SELECT w.role, w.id, AVG(t.value) as avg_task_value
       GROUP BY w.role, w.id) as worker_stats
 GROUP BY worker_stats.role;
 ```
-![img_7.png](img_7.png)
+![img_7.png](images-01-11-25/img_7.png)
 
 
 ### 2.2. Клиенты с максимальным количеством заказов
@@ -65,7 +65,7 @@ WHERE customer_orders.order_count = (
     ) max_orders
 );
 ```
-![img_8.png](img_8.png)
+![img_8.png](images-01-11-25/img_8.png)
 
 
 ### 2.3. Статистика по филиалам: работники и боксы
@@ -76,7 +76,7 @@ FROM (SELECT bo.id, bo.address,
              (SELECT COUNT(*) FROM autoservice_schema.box b WHERE b.id_branch_office = bo.id) as box_count
       FROM autoservice_schema.branch_office bo) as branch_stats;
 ```
-![img_9.png](img_9.png)
+![img_9.png](images-01-11-25/img_9.png)
 
 
 ## 3. Подзапрос в WHERE/HAVING
@@ -87,7 +87,7 @@ SELECT w.full_name, w.role
 FROM autoservice_schema.worker w
 WHERE (SELECT COUNT(*) FROM autoservice_schema.task t WHERE t.worker_id = w.id) > 1;
 ```
-![img_19.png](img_19.png)
+![img_19.png](images-01-11-25/img_19.png)
 
 
 ### 3.2. Заказы с общей стоимостью выше среднего чека
@@ -98,7 +98,7 @@ WHERE (SELECT SUM(t.value) FROM autoservice_schema.task t WHERE t.order_id = o.i
       (SELECT AVG(order_total) FROM 
        (SELECT SUM(t.value) as order_total FROM autoservice_schema.task t GROUP BY t.order_id) totals);
 ```
-![img_10.png](img_10.png)
+![img_10.png](images-01-11-25/img_10.png)
 
 
 
@@ -109,7 +109,7 @@ FROM autoservice_schema.branch_office bo
 WHERE (SELECT COUNT(*) FROM autoservice_schema.worker w WHERE w.id_branch_office = bo.id) >=
       (SELECT COUNT(*) FROM autoservice_schema.box b WHERE b.id_branch_office = bo.id);
 ```
-![img_30.png](img_30.png)
+![img_30.png](images-01-11-25/img_30.png)
 
 
 ## 4. ALL
@@ -126,7 +126,7 @@ HAVING SUM(t.value) >= ALL (
     GROUP BY t2.worker_id
 );
 ```
-![img_11.png](img_11.png)
+![img_11.png](images-01-11-25/img_11.png)
 
 
 ### 4.2. Заказы с максимальной общей стоимостью
@@ -141,7 +141,7 @@ HAVING SUM(t.value) >= ALL (
     GROUP BY t2.order_id
 );
 ```
-![img_12.png](img_12.png)
+![img_12.png](images-01-11-25/img_12.png)
 
 
 
@@ -157,7 +157,7 @@ HAVING SUM(pur.value) >= ALL (
     GROUP BY pur2.provider_id
 );
 ```
-![img_13.png](img_13.png)
+![img_13.png](images-01-11-25/img_13.png)
 
 
 ## 5. IN
@@ -172,7 +172,7 @@ WHERE w.id_branch_office IN (
     WHERE b.box_type = 'Диагностическая линия'
 );
 ```
-![img_20.png](img_20.png)
+![img_20.png](images-01-11-25/img_20.png)
 
 
 
@@ -186,7 +186,7 @@ WHERE c.vin IN (
     WHERE t.value > 1500
 );
 ```
-![img_21.png](img_21.png)
+![img_21.png](images-01-11-25/img_21.png)
 
 
 
@@ -201,7 +201,7 @@ WHERE cust.id IN (
     WHERE t.id IN (SELECT ap.task_id FROM autoservice_schema.autopart ap WHERE ap.task_id IS NOT NULL)
 );
 ```
-![img_14.png](img_14.png)
+![img_14.png](images-01-11-25/img_14.png)
 
 
 
@@ -219,7 +219,7 @@ WHERE p.value > ANY (
     WHERE w2.role = 'Диагност'
 );
 ```
-![img_29.png](img_29.png)
+![img_29.png](images-01-11-25/img_29.png)
 
 
 
@@ -234,7 +234,7 @@ WHERE t.value > ANY (
     WHERE w.role = 'Механик'
 );
 ```
-![img_28.png](img_28.png)
+![img_28.png](images-01-11-25/img_28.png)
 
 
 ### 6.3. Закупки дороже минимальной закупки
@@ -247,7 +247,7 @@ WHERE pur.value > ANY (
     WHERE pur2.provider_id = 1
 );
 ```
-![img_25.png](img_25.png)
+![img_25.png](images-01-11-25/img_25.png)
 
 
 ## 7. EXISTS
@@ -262,7 +262,7 @@ WHERE EXISTS (
     WHERE o.customer_id = c.id
 );
 ```
-![img_15.png](img_15.png)
+![img_15.png](images-01-11-25/img_15.png)
 
 
 
@@ -277,7 +277,7 @@ WHERE EXISTS (
     WHERE t.worker_id = w.id
 );
 ```
-![img_16.png](img_16.png)
+![img_16.png](images-01-11-25/img_16.png)
 
 
 ### 7.3. Филиалы с закрытыми заказами
@@ -293,7 +293,7 @@ WHERE EXISTS (
     WHERE w.id_branch_office = bo.id
 );
 ```
-![img_17.png](img_17.png)
+![img_17.png](images-01-11-25/img_17.png)
 
 
 
@@ -309,7 +309,7 @@ WHERE c1.model IN (
     WHERE c2.vin != c1.vin
 );
 ```
-![img_26.png](img_26.png)
+![img_26.png](images-01-11-25/img_26.png)
 
 
 
@@ -325,5 +325,5 @@ WHERE (p1.address, p1.phone_number) IN (
     AND p2.phone_number IS NOT NULL
 );
 ```
-![img_27.png](img_27.png)
+![img_27.png](images-01-11-25/img_27.png)
 

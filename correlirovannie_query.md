@@ -31,7 +31,7 @@ WHERE (
 )
 ORDER BY total_payout DESC;
 ```
-![img.png](img.png)
+![img.png](images-01-11-25/img.png)
 
 
 ## 2. NOT EXISTS - Работники без выплат
@@ -51,7 +51,7 @@ WHERE EXISTS (
 )
 ORDER BY w.full_name;
 ```
-![img_18.png](img_18.png)
+![img_18.png](images-01-11-25/img_18.png)
 
 
 ## 3. Задачи с ценой выше средней по заказу
@@ -77,7 +77,7 @@ WHERE t.value > (
 )
 ORDER BY t.order_id, t.value DESC;
 ```
-![img_1.png](img_1.png)
+![img_1.png](images-01-11-25/img_1.png)
 
 
 ## 4. Филиалы с количеством боксов выше среднего
@@ -115,7 +115,7 @@ WHERE (
 )
 ORDER BY box_count DESC;
 ```
-![img_2.png](img_2.png)
+![img_2.png](images-01-11-25/img_2.png)
 
 
 
@@ -146,4 +146,4 @@ WHERE (
 )
 ORDER BY total_purchases DESC;
 ```
-![img_3.png](img_3.png)
+![img_3.png](images-01-11-25/img_3.png)
