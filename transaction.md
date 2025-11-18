@@ -1,4 +1,4 @@
-# Дз транзакции от Дамира
+# часть 1
 
 ## 1. Транзакции
 
@@ -138,7 +138,7 @@ ROLLBACK;
 
 ## 2. Уровни изоляции
 
-### 2.1. READ UNCOMMITTED
+### 2.1. READ UNCOMMITTED, грязные данные
 
 T1:
 ```sql
@@ -174,7 +174,7 @@ SELECT * FROM autoservice_schema."order" WHERE id = 12;
 Видим, что данные в T2 обновились только после COMMIT в T1, несмотря на выставленный уровень READ UNCOMMITTED
 Вывод, postgres не разрешает READ UNCOMMITTED
 
-### 2.2. READ COMMITTED
+### 2.2. READ COMMITTED, неповторяющееся чтение
 
 T1:
 ```sql
@@ -270,7 +270,7 @@ COMMIT;
 Для этого нужно понизить уровень изоляции до READ COMMITTED
 
 
-### 2.4. SERIALIZABLE
+### 2.4. SERIALIZABLE, ошибка could not serialize access due to concurrent update
 
 T1:
 ```sql
@@ -363,3 +363,253 @@ WHERE id >= 15;
 
 Ожидаемо ловим ошибку, так как, откатившивсь на первую точку сохранения бд уже не знает о существовании второй, объявленной позже
 
+# часть 2
+
+## Транзакции
+### В систему добавляется новая закупка запчастей, и сразу же вносится одна конкретная запчасть, купленная в рамках этой закупки.
+#### BEGIN ... COMMIT
+```sql
+BEGIN;
+with purchase_id_cte as (
+    insert into autoservice_schema.purchase (provider_id, date, value) VALUES (5, '2025-11-10 09:15:00.000000', 44000.0) returning id)
+insert
+into autoservice_schema.autopart (id, name, purchase_id, task_id)
+select 31                as id,
+       'Амортизатор BMW' as name,
+       id                as purchase_id,
+       null              as task_id
+from purchase_id_cte;
+commit;
+```
+
+
+#### BEGIN ... ROLLBACK
+```sql
+BEGIN;
+with purchase_id_cte as (
+    insert into autoservice_schema.purchase (provider_id, date, value) VALUES (4, '2025-12-10 09:15:00.000000', 22000.0) returning id)
+insert
+into autoservice_schema.autopart (id, name, purchase_id, task_id)
+select 32                as id,
+       'Руль audi' as name,
+       id                as purchase_id,
+       null              as task_id
+from purchase_id_cte;
+rollback;
+```
+
+#### Деление на ноль и откат
+```sql
+BEGIN;
+with purchase_id_cte as (
+    insert into autoservice_schema.purchase (provider_id, date, value) VALUES (4, '2025-12-10 09:15:00.000000', 22000.0) returning id)
+insert
+into autoservice_schema.autopart (id, name, purchase_id, task_id)
+select 1 / 0       as id,
+       'Руль audi' as name,
+       id          as purchase_id,
+       null        as task_id
+from purchase_id_cte;
+commit;
+```
+
+## Уровни изоляции
+
+### Грязные данные. Ставим цену закупки без коммита и просматриваем в другом окне
+Запрос в Т1
+```sql
+BEGIN TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+update autoservice_schema.purchase  SET value = 4000.0 where id = 3;
+```
+
+Запрос в Т2
+```sql
+BEGIN TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+select id, provider_id, date, value
+from autoservice_schema.purchase where id = 3;
+```
+![img.png](images-ZhenShen-18-11-25/img.png)
+
+Запрос в Т1
+```sql
+COMMIT;
+```
+
+Запрос в Т2
+```sql
+select id, provider_id, date, value
+from autoservice_schema.purchase where id = 3;
+```
+![img_1.png](images-ZhenShen-18-11-25/img_1.png)
+
+
+### Неповторяющееся чтение
+
+Т1
+```sql
+BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+select id, provider_id, date, value
+from autoservice_schema.purchase where id = 3;
+```
+![img_2.png](images-ZhenShen-18-11-25/img_2.png)
+
+T2
+```sql
+BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+update autoservice_schema.purchase  SET value = 5454000.0 where id = 3;
+COMMIT;
+```
+
+T1
+```sql
+select id, provider_id, date, value
+from autoservice_schema.purchase where id = 3;
+COMMIT;
+```
+![img_3.png](images-ZhenShen-18-11-25/img_3.png)
+
+### Повторяющееся чтение (Т1 не видит изменения Т2, пока не завершится)
+
+T1
+```sql
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+select id, provider_id, date, value
+from autoservice_schema.purchase where id = 3;
+```
+![img_4.png](images-ZhenShen-18-11-25/img_4.png)
+
+T2
+```sql
+BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+update autoservice_schema.purchase  SET value = 9000.0 where id = 3;
+COMMIT;
+```
+T1
+```sql
+select id, provider_id, date, value
+from autoservice_schema.purchase where id = 3;
+COMMIT;
+```
+![img_5.png](images-ZhenShen-18-11-25/img_5.png)
+
+БД после Т1 и Т2
+![img_6.png](images-ZhenShen-18-11-25/img_6.png)
+
+
+### Повторяющееся чтение (Фантомное чтение через INSERT)
+
+T1
+```sql
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+select id, provider_id, date, value
+from autoservice_schema.purchase where value > 40000.0;
+```
+![img_8.png](images-ZhenShen-18-11-25/img_8.png)
+
+T2
+```sql
+BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+insert into autoservice_schema.purchase  (id, provider_id, date, value) VALUES (20, 4, '2024-07-22 09:45:00.000000', 41000.0);
+COMMIT;
+```
+
+T1
+```sql
+select id, provider_id, date, value
+from autoservice_schema.purchase where value > 40000.0;
+```
+![img_7.png](images-ZhenShen-18-11-25/img_7.png)
+
+### SERIALIZABLE - конфликт когда две транзакции вставляют одинаковые данные
+T1
+```sql
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+SELECT id, provider_id, date, value
+FROM autoservice_schema.purchase where id = 3;
+```
+![img_12.png](images-ZhenShen-18-11-25/img_12.png)
+
+T2
+```sql
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+SELECT id, provider_id, date, value
+FROM autoservice_schema.purchase where id = 3;
+```
+![img_13.png](images-ZhenShen-18-11-25/img_13.png)
+
+T1
+```sql
+UPDATE autoservice_schema.purchase SET value = value - 1000.0 where id = 3;
+COMMIT;
+```
+
+T2
+```sql
+UPDATE autoservice_schema.purchase SET value = value - 1000.0 where id = 3;
+```
+![img_14.png](images-ZhenShen-18-11-25/img_14.png)
+
+T2
+```sql
+ROLLBACK;
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+UPDATE autoservice_schema.purchase SET value = value - 1000.0 where id = 3;
+SELECT id, provider_id, date, value
+FROM autoservice_schema.purchase where id = 3;
+COMMIT;
+```
+![img_15.png](images-ZhenShen-18-11-25/img_15.png)
+
+### Один SAVEPOINT
+Создали закупку
+Создали точку сохранения
+Добавили 2 детали к этой закупке
+Откатились к точке сохранения
+Добавили еще деталь
+Получилось, что в итоге в БД только одна деталь
+T1
+```sql
+BEGIN;
+insert into autoservice_schema.purchase  (id, provider_id, date, value) VALUES (23, 2, '2024-07-22 09:45:00.000000', 31000.0);
+SAVEPOINT after_insert_purchase;
+insert into autoservice_schema.autopart (id, name, purchase_id, task_id) VALUES (32, 'Name1', 23, null);
+insert into autoservice_schema.autopart (id, name, purchase_id, task_id) VALUES (33, 'Name2', 23, null);
+ROLLBACK TO SAVEPOINT after_insert_purchase;
+insert into autoservice_schema.autopart (id, name, purchase_id, task_id) VALUES (34, 'Name3', 23, null);
+COMMIT;
+SELECT id, name, purchase_id, task_id
+FROM autoservice_schema.autopart where purchase_id = 23;
+```
+![img_16.png](images-ZhenShen-18-11-25/img_16.png)
+
+
+### Два SAVEPOINT
+```sql
+BEGIN;
+insert into autoservice_schema.purchase  (id, provider_id, date, value) VALUES (24, 2, '2024-07-22 09:45:00.000000', 31000.0);
+SAVEPOINT after_insert_purchase;
+insert into autoservice_schema.autopart (id, name, purchase_id, task_id) VALUES (35, 'Name1', 24, null);
+SAVEPOINT after_insert_first_autopart;
+insert into autoservice_schema.autopart (id, name, purchase_id, task_id) VALUES (36, 'Name2', 24, null);
+insert into autoservice_schema.autopart (id, name, purchase_id, task_id) VALUES (37, 'Name3', 24, null);
+ROLLBACK TO SAVEPOINT after_insert_first_autopart;
+SELECT id, name, purchase_id, task_id
+FROM autoservice_schema.autopart where purchase_id = 24;
+ROLLBACK TO SAVEPOINT after_insert_purchase;
+SELECT id, name, purchase_id, task_id
+FROM autoservice_schema.autopart where purchase_id = 24;
+COMMIT;
+SELECT id, provider_id, date, value
+FROM autoservice_schema.purchase where  id = 24;
+```
+Первый селект (после первого роллбека):
+![img_17.png](images-ZhenShen-18-11-25/img_17.png)
+Мы видим, что осталось только деталь Name1, а добавление деталей Name2 и Name3 откатилось
+
+Второй (после роллбека):
+![img_18.png](images-ZhenShen-18-11-25/img_18.png)
+Мы видим что откатилось добавление всех деталей
+
+Третий (после коммита)
+![img_19.png](images-ZhenShen-18-11-25/img_19.png)
+Мы видим что хоть мы и делали откаты, но добавление закупки осталось после транзакции
