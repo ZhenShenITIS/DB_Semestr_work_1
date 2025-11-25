@@ -2,10 +2,7 @@
 
 ## Процедуры
 
-### 1.1. Процедура регистрирует нового клиента
-
-
-
+### Процедура регистрирует нового клиента
 ```sql
 CREATE OR REPLACE PROCEDURE autoservice_schema.add_customer(
     full_name VARCHAR,
