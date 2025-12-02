@@ -10,7 +10,7 @@ FROM autoservice_schema.customer c
 LEFT JOIN autoservice_schema."order" o ON o.customer_id = c.id
 GROUP BY c.id, c.full_name;
 ```
-![img_12.png](images/img_12.png)
+![img_12.png](images-0/img_12.png)
 
 - Количество машин в каждом заказе
 
@@ -20,7 +20,7 @@ SELECT oc.order_id,
 FROM autoservice_schema.order_car oc
 GROUP BY oc.order_id;
 ```
-![img_13.png](images/img_13.png)
+![img_13.png](images-0/img_13.png)
 
 - Сумма стоимостей задач по каждому заказу
 
@@ -30,7 +30,7 @@ SELECT t.order_id,
 FROM autoservice_schema.task t
 GROUP BY t.order_id;
 ```
-![img_14.png](images/img_14.png)
+![img_14.png](images-0/img_14.png)
 
 - Средняя стоимость задачи (без типа работы — task_type отсутствует). Можно сгруппировать по полю description, если нужно:
 
@@ -40,7 +40,7 @@ SELECT t.description,
 FROM autoservice_schema.task t
 GROUP BY t.description;
 ```
-![img_15.png](images/img_15.png)
+![img_15.png](images-0/img_15.png)
 
 - Минимальная и максимальная дата создания заказа по статусу — статус удален, поэтому этот запрос невозможен. Можно агрегировать только по creation_date:
 
@@ -50,7 +50,7 @@ SELECT
     MAX(o.creation_date) AS last_created
 FROM autoservice_schema."order" o;
 ```
-![img_16.png](images/img_16.png)
+![img_16.png](images-0/img_16.png)
 
 
 - Список VIN всех машин в заказе одной строкой
@@ -61,7 +61,7 @@ SELECT oc.order_id,
 FROM autoservice_schema.order_car oc
 GROUP BY oc.order_id;
 ```
-![img_17.png](images/img_17.png)
+![img_17.png](images-0/img_17.png)
 
 
 ***
@@ -79,7 +79,7 @@ JOIN autoservice_schema."order" o ON o.customer_id = c.id
 GROUP BY c.id, c.full_name
 HAVING COUNT(o.id) >= 3;
 ```
-![img_18.png](images/img_18.png)
+![img_18.png](images-0/img_18.png)
 
 - Типы задач, где средняя стоимость > 500 — task_type нет, вместо этого можно использовать description:
 
@@ -90,7 +90,7 @@ FROM autoservice_schema.task t
 GROUP BY t.description
 HAVING AVG(t.value) > 500;
 ```
-![img_19.png](images/img_19.png)
+![img_19.png](images-0/img_19.png)
 
 
 ***
@@ -111,7 +111,7 @@ GROUP BY GROUPING SETS (
 )
 ORDER BY o.customer_id NULLS LAST;
 ```
-![img_20.png](images/img_20.png)
+![img_20.png](images-0/img_20.png)
 
 - Иерархические итоги по филиалу → боксу → общему количеству машин (ROLLUP)
 
@@ -125,7 +125,7 @@ LEFT JOIN autoservice_schema.car ca ON ca.box_id = b.id
 GROUP BY ROLLUP (b.id_branch_office, b.id)
 ORDER BY branch_id NULLS LAST, box_id NULLS LAST;
 ```
-![img_21.png](images/img_21.png)
+![img_21.png](images-0/img_21.png)
 
 - Полные комбинации количества заказов по клиенту (CUBE)
 
@@ -137,7 +137,7 @@ FROM autoservice_schema."order" o
 GROUP BY CUBE (o.customer_id)
 ORDER BY o.customer_id NULLS LAST;
 ```
-![img_22.png](images/img_22.png)
+![img_22.png](images-0/img_22.png)
 
 
 ***
@@ -160,7 +160,7 @@ HAVING SUM(t.value) > 0
 ORDER BY total_work_value DESC, c.full_name ASC
 LIMIT 5;
 ```
-![img_23.png](images/img_23.png)
+![img_23.png](images-0/img_23.png)
 
 - Среднее время выполнения заказа невозможно сгруппировать по статусу, так как статус убран. Можно вывести среднюю длительность для всех заказов:
 
@@ -170,4 +170,4 @@ SELECT
 FROM autoservice_schema."order" o
 JOIN autoservice_schema.order_closure_date ocd ON o.id = ocd.order_id;
 ```
-![img_24.png](images/img_24.png)
+![img_24.png](images-0/img_24.png)

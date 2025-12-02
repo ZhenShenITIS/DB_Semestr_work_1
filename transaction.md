@@ -156,7 +156,7 @@ BEGIN TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 SELECT * FROM autoservice_schema."order" WHERE id = 12;
 ```
 
-![img_133.png](images/img_133.png)
+![img_133.png](images-0/img_133.png)
 
 
 T1:
@@ -169,7 +169,7 @@ T2:
 SELECT * FROM autoservice_schema."order" WHERE id = 12;
 ```
 
-![img_134.png](images/img_134.png)
+![img_134.png](images-0/img_134.png)
 
 Видим, что данные в T2 обновились только после COMMIT в T1, несмотря на выставленный уровень READ UNCOMMITTED
 Вывод, postgres не разрешает READ UNCOMMITTED
@@ -185,7 +185,7 @@ FROM autoservice_schema."order"
 WHERE id = 12;
 ```
 
-![img_127.png](images/img_127.png)
+![img_127.png](images-0/img_127.png)
 
 T2:
 ```sql
@@ -201,7 +201,7 @@ FROM autoservice_schema."order"
 WHERE id = 12;
 ```
 
-![img_128.png](images/img_128.png)
+![img_128.png](images-0/img_128.png)
 
 Если во время выполнения T1, другая транзакция изменит данные, то T1 будет использовать изменённые данные, что не всегда ожидаемо
 
@@ -217,7 +217,7 @@ SELECT *
 FROM autoservice_schema."order"
 WHERE id = 12;
 ```
-![img_129.png](images/img_129.png)
+![img_129.png](images-0/img_129.png)
 
 T2:
 ```sql
@@ -233,7 +233,7 @@ SELECT * FROM autoservice_schema."order" WHERE id = 12;
 COMMIT;
 ```
 
-![img_130.png](images/img_130.png)
+![img_130.png](images-0/img_130.png)
 
 #### фантомное чтение через INSERT в T2
 
@@ -246,7 +246,7 @@ FROM autoservice_schema.customer
 WHERE id > 10;
 ```
 
-![img_131.png](images/img_131.png)
+![img_131.png](images-0/img_131.png)
 
 T2:
 ```sql
@@ -264,7 +264,7 @@ WHERE id > 10;
 COMMIT;
 ```
 
-![img_132.png](images/img_132.png)
+![img_132.png](images-0/img_132.png)
 
 Можно сделать вывод, что в postgres при уровне REPEATABLE READ фантомное чтение невозможно, несмотря на таблицу
 Для этого нужно понизить уровень изоляции до READ COMMITTED
@@ -292,7 +292,7 @@ COMMIT;
 
 Здесь запрос не выполнялся, пока не дождался коммита на предыдущем
 
-![img_135.png](images/img_135.png)
+![img_135.png](images-0/img_135.png)
 
 T1:
 ```sql
@@ -301,7 +301,7 @@ COMMIT;
 
 Теперь выполнился T2 и вызвал ошибку could not serialize access due to concurrent update
 
-![img_136.png](images/img_136.png)
+![img_136.png](images-0/img_136.png)
 
 Повторим T2
 ```sql
@@ -313,14 +313,14 @@ UPDATE autoservice_schema.customer SET full_name = 'Паровозов Олла�
 COMMIT;
 ```
 Успешно
-![img_137.png](images/img_137.png)
+![img_137.png](images-0/img_137.png)
 
 
 ## 3. SAVEPOINT
 
 Изначально таблица выглядит так:
 
-![img_138.png](images/img_138.png)
+![img_138.png](images-0/img_138.png)
 
 
 ```sql
@@ -336,7 +336,7 @@ FROM autoservice_schema.customer
 WHERE id >= 15;
 ```
 
-![img_139.png](images/img_139.png)
+![img_139.png](images-0/img_139.png)
 
 
 Откатываемся до первой точки сохранения
@@ -348,7 +348,7 @@ FROM autoservice_schema.customer
 WHERE id >= 15;
 ```
 
-![img_140.png](images/img_140.png)
+![img_140.png](images-0/img_140.png)
 
 Откатываемся до второй сохранения
 ```sql
@@ -359,7 +359,7 @@ FROM autoservice_schema.customer
 WHERE id >= 15;
 ```
 
-![img_141.png](images/img_141.png)
+![img_141.png](images-0/img_141.png)
 
 Ожидаемо ловим ошибку, так как, откатившивсь на первую точку сохранения бд уже не знает о существовании второй, объявленной позже
 
