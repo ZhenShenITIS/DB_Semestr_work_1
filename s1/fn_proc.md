@@ -5,8 +5,9 @@ CREATE OR REPLACE PROCEDURE autoservice_schema.add_new_customer(
     p_full_name VARCHAR,
     p_phone_number VARCHAR
 )
-LANGUAGE plpgsql
-AS $$
+    LANGUAGE plpgsql
+AS
+$$
 BEGIN
     IF p_phone_number LIKE '+7%' THEN
         INSERT INTO autoservice_schema.customer (full_name, phone_number)

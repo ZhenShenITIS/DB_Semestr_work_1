@@ -3,11 +3,11 @@
 - Количество заказов у каждого клиента
 
 ```sql
-SELECT c.id AS customer_id,
+SELECT c.id        AS customer_id,
        c.full_name,
        COUNT(o.id) AS orders_count
 FROM autoservice_schema.customer c
-LEFT JOIN autoservice_schema."order" o ON o.customer_id = c.id
+         LEFT JOIN autoservice_schema."order" o ON o.customer_id = c.id
 GROUP BY c.id, c.full_name;
 ```
 ![img_12.png](images-0/img_12.png)

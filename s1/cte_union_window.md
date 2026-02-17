@@ -337,8 +337,13 @@ group by full_name, w.id
 
 ### 3.4. Задача + сумма трёх подряд идущих задач (LAG)
 ```sql
-SELECT t.id, t.description, t.value, t.value + LAG(t.value, 1, 0) OVER (ORDER BY o.creation_date) + LAG(t.value, 2, 0) OVER (ORDER BY o.creation_date) AS last3
-FROM autoservice_schema.task t JOIN autoservice_schema."order" o on o.id = t.order_id
+SELECT t.id,
+       t.description,
+       t.value,
+       t.value + LAG(t.value, 1, 0) OVER (ORDER BY o.creation_date) +
+       LAG(t.value, 2, 0) OVER (ORDER BY o.creation_date) AS last3
+FROM autoservice_schema.task t
+         JOIN autoservice_schema."order" o on o.id = t.order_id
 ORDER BY o.creation_date;
 ```
 ![img_16.png](images-10-11-25/img_16.png)
@@ -540,16 +545,15 @@ ORDER BY w.id, task_number;
 
 ### LAST_VALUE: Получение последней стоимости задачи для каждого работника
 ```sql
-SELECT
-    w.id,
-    w.full_name,
-    t.id as task_id,
-    t.value,
-    LAST_VALUE(t.value) OVER (
-        PARTITION BY w.id
-        ORDER BY t.id
-        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-        ) as last_task_value
+SELECT w.id,
+       w.full_name,
+       t.id  as task_id,
+       t.value,
+       LAST_VALUE(t.value) OVER (
+           PARTITION BY w.id
+           ORDER BY t.id
+           ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+           ) as last_task_value
 FROM autoservice_schema.task t
          JOIN autoservice_schema.worker w ON t.worker_id = w.id
 ORDER BY w.id, t.id;

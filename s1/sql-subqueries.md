@@ -5,8 +5,8 @@
 ### 1.1. Информация о работниках с подсчетом их задач
 ```sql
 SELECT w.full_name,
-       (SELECT COUNT(*) 
-        FROM autoservice_schema.task t 
+       (SELECT COUNT(*)
+        FROM autoservice_schema.task t
         WHERE t.worker_id = w.id) as task_count
 FROM autoservice_schema.worker w;
 ```

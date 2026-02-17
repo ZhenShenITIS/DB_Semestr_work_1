@@ -1,3 +1,4 @@
-.obsidian
+../.obsidian
 .idea
 .gitignore
+s2/.env
