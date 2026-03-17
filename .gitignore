@@ -2,3 +2,7 @@
 .idea
 .gitignore
 s2/.env
+s2/autoservice_full.dump
+s2/schema_only.sql
+s2/only_cars.sql
+s2/only_office.sql
